@@ -1,81 +1,130 @@
-const board = document.querySelector('#board')
 
-const cellSize = 20
+import Cell from './cell.js';
 
+const board = document.querySelector('#board');
 const context = board.getContext('2d');
-// let boardWidth = (window.innerWidth/2)-(window.innerWidth/2)%cellSize;
-// let boardHeight = (window.innerHeight/2)-(window.innerHeight/2)%cellSize;
-let boardWidth = 600;
-let boardHeight = 400;
+
+const cellSize = 20;
+const rows = 20;
+const cols = 40;
+
+let boardWidth = cellSize * cols;
+let boardHeight = cellSize * rows;
 
 board.width = boardWidth;
 board.height = boardHeight;
 
-let cells = []
+let grid = [];
+let newGrid = [];
 
-        // context.beginPath();
-        // context.strokeStyle='black';
-        // context.rect(0, 0, 50, 50);
-        // context.stroke();
-        // context.closePath();
-
-class Cell {
-    constructor(x, y, h, w, i, j) {
-        this.x = x
-        this.y = y
-        this.w = w
-        this.h = h
-        this.index = [i, j]
-        this.status = "dead"
-    }
-
-    draw(context) {
-        context.beginPath();
-        context.rect(this.x, this.y, this.w, this.h);
-        context.strokeStyle='black';
-        
-        context.stroke();
-        context.closePath();
-    }
-
-    born(context) {
-        this.status = "alive"
-        context.fillStyle='green';
-        context.fillRect(this.x, this.y, this.w, this.h);
-        this.draw(context)
-    }
-
-    update(context) {
-        this.draw(context) 
-    }
-}
-
-let y = 0
-for (let i = 0; i < boardHeight/cellSize; i++) {
-    let x = 0
-    for (let j = 0; j < boardWidth / cellSize; j++) {
-        cells.push(new Cell(x, y, cellSize, cellSize, i,j))
-        x+=cellSize
-    }
-    y+=cellSize
-}
-
-
-const updateBoard = () => {
-    context.clearRect(0, 0, boardWidth, boardHeight);
-    cells.forEach(el => {
-        el.draw(context)
-    });
-    cells[255].born(context)
-    cells.forEach(el => {
-        if (el.status === "alive") {
-            console.log(el);
-        }
-    });
-};
+const setup = () => {
+    for (let i = 0; i < rows; i++) {
+        let arr = [];
+		for (let j = 0; j < cols; j++) {
+            arr.push(
+                new Cell(j * cellSize, i * cellSize, cellSize, cellSize, 'dead')
+			);
+		}
+		grid.push(arr);
+	}
     
-setInterval(() => {
-    requestAnimationFrame(updateBoard);
-}, 1000);
+	for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+            grid[i][j].update(context);
+			grid[i][j].state = 'dead';
+		}
+	}
+};
+setup();
 
-updateBoard()
+const randomCell = () => {
+    for (let i = 0; i < 200; i++) {
+        let x = Math.floor(Math.random() * 19);
+		let y = Math.floor(Math.random() * 39);
+		grid[x][y].alive(context);
+	}
+};
+randomCell();
+
+let lastUpdateTime = 0;
+const updateInterval = 1000;
+
+// ---------------------------------
+// tak, wiem, kod paskudny, chciałem tylko zrozumieć jak to działa, obiecuje tym razem zrobie refactor xD i tym razem dokończe projekt
+// ---------------------------------
+const updateBoard = (timestamp) => {
+	if (timestamp - lastUpdateTime >= updateInterval) {
+		for (let i = 0; i < rows; i++) {
+			let arrr = [];
+			for (let j = 0; j < cols; j++) {
+				let aliveCount = 0;
+				if (i > 0 && j > 0 && grid[i - 1][j - 1].state === 'alive') {
+					aliveCount += 1;
+				}
+				if (i != 0 && grid[i - 1][j].state === 'alive') {
+					aliveCount += 1;
+				}
+				if (i > 0 && j < cols - 1 && grid[i - 1][j + 1].state === 'alive') {
+					aliveCount += 1;
+				}
+				if (j > 0 && grid[i][j - 1].state === 'alive') {
+					aliveCount += 1;
+				}
+				if (j < cols - 1 && grid[i][j + 1].state === 'alive') {
+					aliveCount += 1;
+				}
+				if (i < rows - 1 && j > 0 && grid[i + 1][j - 1].state === 'alive') {
+					aliveCount += 1;
+				}
+				if (i < rows - 1 && grid[i + 1][j].state === 'alive') {
+					aliveCount += 1;
+				}
+				if (
+					i < rows - 1 &&
+					j < cols - 1 &&
+					grid[i + 1][j + 1].state === 'alive'
+				) {
+					aliveCount += 1;
+				}
+
+				if (grid[i][j].state === 'alive') {
+					if (aliveCount < 2 || aliveCount >= 4) {
+						arrr.push(
+							new Cell(j * cellSize, i * cellSize, cellSize, cellSize, 'dead')
+						);
+						console.log('ALIVE mniej niz 2 więcej niz 4');
+					}
+					if (aliveCount === 2 || aliveCount === 3) {
+						arrr.push(
+							new Cell(j * cellSize, i * cellSize, cellSize, cellSize, 'alive')
+						);
+						console.log('ALIVE miedzy 2, a 4');
+					}
+				} else if (grid[i][j].state === 'dead' && aliveCount === 3) {
+					arrr.push(
+						new Cell(j * cellSize, i * cellSize, cellSize, cellSize, 'alive')
+					);
+					console.log('DEAD równo 3');
+				} else if (grid[i][j].state === 'dead' && aliveCount !== 3) {
+					arrr.push(
+						new Cell(j * cellSize, i * cellSize, cellSize, cellSize, 'dead')
+					);
+					console.log('DEAD inaczej niz 3');
+				}
+			}
+			newGrid.push(arrr);
+		}
+
+		grid = newGrid.slice();
+		newGrid = [];
+
+		for (let i = 0; i < rows; i++) {
+			for (let j = 0; j < cols; j++) {
+				grid[i][j].update(context);
+			}
+		}
+		lastUpdateTime = timestamp;
+	}
+	requestAnimationFrame(updateBoard);
+};
+requestAnimationFrame(updateBoard);
