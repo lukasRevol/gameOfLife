@@ -55,8 +55,10 @@ const updateCellsOncanvas = () => { // nested loops itterating troughtout all ce
 	}
 }
 
-// comlicated and not very beautiful function that creates new array "newGrid" with updated cell status depending on that cell neighboring cells status
+// Comlicated and not very beautiful function that creates new array "newGrid" with updated cell status depending on that cell neighboring cells status
 const checkNeighbors = () => {
+
+	// Nested For loops iterate through all cells in "grid" array. And on every cell it checks neighboring cells status
 	for (let i = 0; i < rows; i++) {
 		let arr = [];
 		for (let j = 0; j < cols; j++) {
@@ -115,6 +117,7 @@ const checkNeighbors = () => {
 	}
 }
 
+const run = true
 
 const updateBoard = (timestamp) => {
 	if (timestamp - lastUpdateTime >= updateInterval) {
@@ -126,6 +129,9 @@ const updateBoard = (timestamp) => {
 
 		lastUpdateTime = timestamp;
 	}
-	requestAnimationFrame(updateBoard);
+	if (run === true) {
+		
+		requestAnimationFrame(updateBoard);
+	}
 };
 requestAnimationFrame(updateBoard);
