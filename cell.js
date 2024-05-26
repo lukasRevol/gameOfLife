@@ -10,7 +10,7 @@ export default class Cell {
     draw(context) {
         context.beginPath();
         context.rect(this.x, this.y, this.w, this.h);
-        context.strokeStyle='black';
+        context.strokeStyle='#222';
         context.stroke();
         context.closePath();
     }
